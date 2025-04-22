@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "../context/UserContext";
+import { getUsers } from "../data/userStorage";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -9,7 +10,7 @@ const Login = () => {
   const { login } = useUser();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -19,7 +20,7 @@ const Login = () => {
     }
 
     try {
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const users = await getUsers();
       const user = users.find(
         (u) => u.email === email && u.password === password
       );

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { getUsers, saveUsers } from "../data/userStorage";
+import { useUser } from "../context/UserContext";
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -9,36 +11,26 @@ const Register = () => {
   const [role, setRole] = useState("student"); // Por defecto, estudiante
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { login } = useUser();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-
-    // Este componente maneja el registro de nuevos usuarios
-    // Utiliza el hook useState para manejar los estados de los campos del formulario
-    // y useNavigate para redirigir al usuario después del registro exitoso
-    // Validaciones básicas
     if (!name || !email || !password || !confirmPassword) {
       setError("Todos los campos son obligatorios");
       return;
     }
-
     if (password !== confirmPassword) {
       setError("Las contraseñas no coinciden");
       return;
     }
-
     try {
-      // Verificar si el usuario ya existe
-      const users = JSON.parse(localStorage.getItem("users") || "[]");
+      const users = await getUsers();
       const existingUser = users.find((u) => u.email === email);
-
       if (existingUser) {
         setError("Este correo electrónico ya está registrado");
         return;
       }
-
-      // Crear nuevo usuario
       const newUser = {
         id: Date.now().toString(),
         name,
@@ -47,19 +39,11 @@ const Register = () => {
         role,
         createdAt: new Date().toISOString(),
       };
-
-      // Guardar en localStorage
       users.push(newUser);
-      localStorage.setItem("users", JSON.stringify(users));
-
-      // Iniciar sesión automáticamente
-      // login(newUser);
-      if (newUser) {
-        localStorage.setItem("currentUser", JSON.stringify(newUser));
-        navigate("/home");
-      } else {
-        setError("El correo ya está registrado");
-      }
+      await saveUsers(users);
+      localStorage.setItem("currentUser", JSON.stringify(newUser));
+      login(newUser);
+      navigate("/home");
     } catch (err) {
       setError("Error al registrar usuario");
       console.error(err);
